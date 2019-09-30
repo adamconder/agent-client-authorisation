@@ -29,7 +29,8 @@ import play.api.libs.json.Reads._
 import play.api.libs.json.{JsObject, Reads, _}
 import uk.gov.hmrc.agent.kenshoo.monitoring.HttpAPIMonitor
 import uk.gov.hmrc.agentclientauthorisation.UriPathEncoding.encodePathSegment
-import uk.gov.hmrc.agentclientauthorisation.model.{InvalidTrust, TrustName, TrustResponse}
+import uk.gov.hmrc.agentclientauthorisation.model
+import uk.gov.hmrc.agentclientauthorisation.model._
 import uk.gov.hmrc.agentmtdidentifiers.model.{MtdItId, Utr, Vrn}
 import uk.gov.hmrc.domain.Nino
 import uk.gov.hmrc.http.logging.Authorization
@@ -73,6 +74,9 @@ trait DesConnector {
     vrn: Vrn)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[VatCustomerInfo]]
 
   def getTrustName(utr: Utr)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[TrustResponse]
+
+  //TODO APB-4370
+//  def getCgtName(cgtRef: CgtRef)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[CgtResponse]
 }
 
 @Singleton
@@ -117,6 +121,29 @@ class DesConnectorImpl @Inject()(
       }
     }
   }
+
+
+  //TODO - APB-4370
+//  def getCgtName(cgtRef: CgtRef)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[CgtResponse] = {
+//
+//    val desHeaderCarrier = hc.copy(
+//      authorization = Some(Authorization(s"Bearer $authorizationToken")),
+//      extraHeaders = hc.extraHeaders :+ "Environment" -> environment :+ "CorrelationId" -> UUID.randomUUID().toString
+//    )
+//
+//    //TODO Update URL when given SPEC
+//    val url = new URL(baseUrl, s"/temp-cgt-name/${cgtRef.value}").toString
+//
+//    httpGet.GET[HttpResponse](url)(rawHttpReads, desHeaderCarrier, ec).map {
+//      _ =>
+//      //TODO Remove stub when GIVEN SPEC
+//        cgtRef.value match {
+//        case "XMCGTP123456789" => CgtResponse(Right(CgtName("Hello CGT")))
+//        case "XACGTP987654321" => CgtResponse(Right(CgtName("Goodbye CGT")))
+//        case _ => CgtResponse(Left(InvalidCgt("502", "Help Needed")))
+//      }
+//    }
+//  }
 
   private def getWithDesHeaders[T: HttpReads](apiName: String, url: String)(
     implicit hc: HeaderCarrier,

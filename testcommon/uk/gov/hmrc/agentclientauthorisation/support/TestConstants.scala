@@ -35,6 +35,10 @@ object TestConstants {
   val utr = Utr("2134514321")
   val utr2 = Utr("3134514321")
 
+  val cgtRef = CgtRef("XMCGTP123456789")
+  val cgtRef2 = CgtRef("XACGTP987654321")
+  val cgtRef3 = CgtRef("XBCGTP567891234")
+
   val arn = "ABCDEF123456"
 
   val invitationIds = Seq(InvitationId("ABBBBBBBBBBCA"), InvitationId("ABBBBBBBBBBCB"), InvitationId("ABBBBBBBBBBCC"))

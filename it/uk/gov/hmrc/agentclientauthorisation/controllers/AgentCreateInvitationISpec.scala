@@ -122,6 +122,9 @@ class AgentCreateInvitationISpec extends BaseISpec {
         givenGetAgencyNameViaClientStub(arn)
         givenGetAgencyEmailAgentStub(arn)
 
+        //TODO Update when SPEC is GIVEN
+        getCgtName(cgtRef, response = "")
+
         val requestBody = Json.parse(
           s"""
              |{
@@ -177,6 +180,7 @@ class AgentCreateInvitationISpec extends BaseISpec {
           await(controller.createInvitation(arn)(request.withJsonBody(requestBody)))
         }
       }
+
       "Client Name not found" in {
         givenAuditConnector()
         givenAuthorisedAsAgent(arn)

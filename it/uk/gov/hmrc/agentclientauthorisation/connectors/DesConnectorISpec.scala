@@ -140,6 +140,12 @@ class DesConnectorISpec extends UnitSpec with AppAndStubs with DesStubs {
     }
   }
 
+  "getCgtName" should {
+    "return a Cgt Name for given Ref" in {
+      getCgtName(cgtRef)
+    }
+  }
+
   private def connector = app.injector.instanceOf[DesConnector]
 
 }

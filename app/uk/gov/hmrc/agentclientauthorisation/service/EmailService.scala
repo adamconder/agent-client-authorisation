@@ -111,6 +111,7 @@ class EmailService @Inject()(
           case HMRCPIR     => messagesApi(s"service.$HMRCPIR")
           case HMRCMTDVAT  => messagesApi(s"service.$HMRCMTDVAT")
           case HMRCTERSORG => messagesApi(s"service.$HMRCTERSORG")
+//          case HMRCCGTPD =>   messagesApi(s"service.$HMRCCGTPD")
         })
       )
     )

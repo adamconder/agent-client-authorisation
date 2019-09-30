@@ -17,6 +17,7 @@
 package uk.gov.hmrc.agentclientauthorisation.support
 
 import com.github.tomakehurst.wiremock.client.WireMock._
+import uk.gov.hmrc.agentclientauthorisation.model.CgtRef
 import uk.gov.hmrc.agentclientauthorisation.support.TestConstants._
 import uk.gov.hmrc.agentmtdidentifiers.model.{MtdItId, Utr, Vrn}
 import uk.gov.hmrc.domain.Nino
@@ -247,6 +248,21 @@ trait DesStubs {
             .withHeader("Content-Type", "application/json")
             .withStatus(status)
             .withBody(response)))
+  }
+
+  //TODO Update URL when given SPEC for CGT
+  def getCgtName(cgtRef: CgtRef, status: Int = 200, response: String) = {
+    stubFor(
+      get(urlEqualTo(s"/temp-cgt-name/${cgtRef.value}"))
+        .withHeader("authorization", equalTo("Bearer secret"))
+        .withHeader("environment", equalTo("test"))
+        .willReturn(
+          aResponse()
+            .withHeader("Content-Type", "application/json")
+            .withStatus(status)
+            .withBody(response)
+        )
+    )
   }
 
   def failsVatCustomerDetails(vrn: Vrn, withStatus: Int) = {

@@ -42,7 +42,8 @@ class ClientNameService @Inject()(
       case HMRCPIR     => getCitizenName(Nino(clientId))
       case HMRCMTDVAT  => getVatName(Vrn(clientId))
       case HMRCTERSORG => getTrustName(Utr(clientId))
-      case HMRCCGTPD => getCGTName(CgtRef(clientId))
+      //TODO Use for APB-4370
+//      case HMRCCGTPD   => getCgtName(CgtRef(clientId))
       case _           => Future successful None
     }
 
@@ -79,6 +80,13 @@ class ClientNameService @Inject()(
         None
     }
 
-  def getCGTName(ref: CgtRef)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[String]] =
-    Future.successful(Some("CGT Name"))
+  //TODO - Waiting for Name SPEC
+//  def getCgtName(cgtRef: CgtRef)(implicit hc: HeaderCarrier, ec: ExecutionContext): Future[Option[String]] = {
+//    desConnector.getCgtName(cgtRef).map(_.response).map {
+//      case Right(cgtName) => Some(cgtName.name)
+//      case Left(invalidCgt) =>
+//        Logger.warn(s"error during retrieving trust name for utr: ${cgtRef.value} , error: $invalidCgt")
+//      None
+//    }
+//  }
 }

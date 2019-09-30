@@ -188,7 +188,7 @@ class EmailServiceSpec extends UnitSpec with MockFactory with BeforeAndAfter {
       verify(mockEmailConnector).sendEmail(_: EmailInformation)(_: HeaderCarrier, _: ExecutionContext)
     }
 
-    "return Unit to remove email details for Trust" in {
+    "return Unit to successfully sent email for Trust" in {
       mockMessagesApi.apply("services.HMRC-TERS-ORG")
       (mockEmailConnector
         .sendEmail(_: EmailInformation)(_: HeaderCarrier, _: ExecutionContext))
@@ -208,6 +208,35 @@ class EmailServiceSpec extends UnitSpec with MockFactory with BeforeAndAfter {
           Service.Trust,
           Utr("555219930"),
           Utr("555219930"),
+          LocalDate.parse("2010-01-01"),
+          Some(dfe),
+          Some("continue/url"),
+          List.empty
+        )))
+
+      verify(mockEmailConnector).sendEmail(_: EmailInformation)(_: HeaderCarrier, _: ExecutionContext)
+    }
+
+    "return Unit to successfully sent email Capital Gains" in {
+      mockMessagesApi.apply("services.HMRC-CGTP-PD")
+      (mockEmailConnector
+        .sendEmail(_: EmailInformation)(_: HeaderCarrier, _: ExecutionContext))
+        .expects(*, hc, *)
+        .returns(())
+      (mockInvitationRepository
+        .removeEmailDetails(_: Invitation)(_: ExecutionContext))
+        .expects(*, *)
+        .returns(Future())
+
+      await(
+        emailService.sendAcceptedEmail(Invitation(
+          BSONObjectID.generate(),
+          InvitationId("ETSNMKR6P6HRL"),
+          arn,
+          Some("business"),
+          Service.Trust,
+          CgtRef("555219930"),
+          CgtRef("555219930"),
           LocalDate.parse("2010-01-01"),
           Some(dfe),
           Some("continue/url"),
