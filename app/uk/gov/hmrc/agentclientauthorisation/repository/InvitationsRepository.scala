@@ -34,6 +34,7 @@ import uk.gov.hmrc.mongo.ReactiveRepository
 import uk.gov.hmrc.mongo.json.ReactiveMongoFormats
 import play.api.libs.json.JodaWrites._
 import play.api.libs.json.JodaReads._
+import uk.gov.hmrc.agentclientauthorisation.repository.InvitationRecordFormat.{arnClientServiceStateKey, arnClientStateKey, createdKey}
 
 import scala.collection.Seq
 import scala.concurrent.{ExecutionContext, Future}
@@ -100,12 +101,9 @@ class InvitationsRepositoryImpl @Inject()(mongo: ReactiveMongoComponent)
         name = Some("invitationIdIndex"),
         unique = true,
         sparse = true),
-      Index(Seq(InvitationRecordFormat.arnClientStateKey        -> IndexType.Ascending)),
-      Index(Seq(InvitationRecordFormat.arnClientServiceStateKey -> IndexType.Ascending)),
-      Index(
-        Seq(
-          InvitationRecordFormat.arnClientServiceStateKey -> IndexType.Ascending,
-          InvitationRecordFormat.createdKey               -> IndexType.Ascending))
+      Index(Seq(arnClientStateKey        -> IndexType.Ascending)),
+      Index(Seq(arnClientServiceStateKey -> IndexType.Ascending)),
+      Index(Seq(arnClientServiceStateKey -> IndexType.Ascending, createdKey -> IndexType.Ascending))
     )
 
   def create(
@@ -159,13 +157,10 @@ class InvitationsRepositoryImpl @Inject()(mongo: ReactiveMongoComponent)
       else Seq(InvitationRecordFormat.toArnClientServiceStateKey(arn, clientId, services.headOption, status))
 
     val serviceQuery: (String, Option[JsValue]) = "$or" -> Some(
-      JsArray(createKeys.map(key => Json.obj(InvitationRecordFormat.arnClientServiceStateKey -> Some(JsString(key))))))
-
-    val dateQuery: (String, Option[JsValue]) = InvitationRecordFormat.createdKey -> createdOnOrAfter.map(date =>
-      Json.obj("$gte" -> DefaultJodaLocalDateWrites.writes(date))) //TODO: pre-upgrade this was JsNumber(date.toDateTimeAtStartOfDay().getMillis))) -- backward compatibility issues?
+      JsArray(createKeys.map(key => Json.obj(arnClientServiceStateKey -> Some(JsString(key))))))
 
     val searchOptions: Seq[(String, JsValueWrapper)] =
-      Seq(serviceQuery, dateQuery)
+      Seq(serviceQuery, createdDateQuery(createdOnOrAfter))
         .filter(_._2.isDefined)
         .map(option => option._1 -> toJsFieldJsValueWrapper(option._2.get))
 
@@ -175,10 +170,19 @@ class InvitationsRepositoryImpl @Inject()(mongo: ReactiveMongoComponent)
 
     collection
       .find[JsObject, JsObject](query, None)
-      .sort(Json.obj(InvitationRecordFormat.createdKey -> JsNumber(-1)))
+      .sort(Json.obj(createdKey -> JsNumber(-1)))
       .cursor[Invitation](ReadPreference.primaryPreferred)
       .collect[List](1000, Cursor.FailOnError[List[Invitation]]())
   }
+
+  private def createdDateQuery(createdOnOrAfter: Option[LocalDate]) =
+    "$or" -> createdOnOrAfter.map { date =>
+      JsArray(
+        Seq(
+          Json.obj(createdKey -> Json.obj("$gte" -> DefaultJodaLocalDateWrites.writes(date))),
+          Json.obj(createdKey -> Json.obj("$gte" -> JsNumber(date.toDateTimeAtStartOfDay().getMillis)))
+        ))
+    }
 
   def findInvitationInfoBy(
     arn: Option[Arn] = None,
@@ -188,10 +192,10 @@ class InvitationsRepositoryImpl @Inject()(mongo: ReactiveMongoComponent)
     createdOnOrAfter: Option[LocalDate] = None)(implicit ec: ExecutionContext): Future[List[InvitationInfo]] = {
 
     val key = InvitationRecordFormat.toArnClientServiceStateKey(arn, clientId, service, status)
+
     val searchOptions: Seq[(String, JsValueWrapper)] = Seq(
       InvitationRecordFormat.arnClientServiceStateKey -> Some(JsString(key)),
-      InvitationRecordFormat.createdKey -> createdOnOrAfter.map(date =>
-        Json.obj("$gte" -> JsNumber(date.toDateTimeAtStartOfDay().getMillis)))
+      createdDateQuery(createdOnOrAfter)
     ).filter(_._2.isDefined)
       .map(option => option._1 -> toJsFieldJsValueWrapper(option._2.get))
 
@@ -207,7 +211,7 @@ class InvitationsRepositoryImpl @Inject()(mongo: ReactiveMongoComponent)
         InvitationRecordFormat
           .toArnClientStateKey(arn.value, clientIdType, clientIdValue, status.getOrElse("").toString)
     }
-    val query = Json.obj(InvitationRecordFormat.arnClientStateKey -> Json.obj("$in" -> keys))
+    val query = Json.obj(arnClientStateKey -> Json.obj("$in" -> keys))
     findInvitationInfoBySearch(query)
   }
 
